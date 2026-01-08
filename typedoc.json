@@ -11,7 +11,8 @@
     "categorizeByGroup": true,
     "searchInComments": true,
     "navigationLinks": {
-        "GitHub": "https://github.com/JacobLinCool/firestore-rest-transaction"
+        "GitHub": "https://github.com/JacobLinCool/fires2rest",
+        "NPM": "https://www.npmjs.com/package/fires2rest"
     },
     "plugin": [],
     "skipErrorChecking": true

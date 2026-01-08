@@ -14,17 +14,17 @@ abstract class FieldValueBase {
 }
 
 /** Server timestamp sentinel */
-class ServerTimestampValue extends FieldValueBase {
+export class ServerTimestampValue extends FieldValueBase {
     readonly _type = "serverTimestamp";
 }
 
 /** Delete field sentinel */
-class DeleteFieldValue extends FieldValueBase {
+export class DeleteFieldValue extends FieldValueBase {
     readonly _type = "delete";
 }
 
 /** Increment sentinel */
-class IncrementValue extends FieldValueBase {
+export class IncrementValue extends FieldValueBase {
     readonly _type = "increment";
     constructor(readonly amount: number) {
         super();
@@ -32,7 +32,7 @@ class IncrementValue extends FieldValueBase {
 }
 
 /** Array union sentinel */
-class ArrayUnionValue extends FieldValueBase {
+export class ArrayUnionValue extends FieldValueBase {
     readonly _type = "arrayUnion";
     constructor(readonly elements: unknown[]) {
         super();
@@ -40,7 +40,7 @@ class ArrayUnionValue extends FieldValueBase {
 }
 
 /** Array remove sentinel */
-class ArrayRemoveValue extends FieldValueBase {
+export class ArrayRemoveValue extends FieldValueBase {
     readonly _type = "arrayRemove";
     constructor(readonly elements: unknown[]) {
         super();

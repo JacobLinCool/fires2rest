@@ -5,30 +5,16 @@
  */
 
 // Main client
-export { Firestore } from "./client.js";
-export { CollectionReference, DocumentReference } from "./references.js";
-export { Transaction } from "./transaction.js";
+export * from "./client.js";
+export * from "./references.js";
+export * from "./transaction.js";
 
 // Value utilities
-export {
-    FieldValue,
-    GeoPoint,
-    Timestamp,
-    fromFirestoreValue,
-    toFirestoreValue,
-} from "./value.js";
+export * from "./field-value.js";
+export * from "./value.js";
 
 // Auth utilities
-export { createJWT, getFirestoreToken } from "./auth.js";
+export * from "./auth.js";
 
 // Types
-export type {
-    DocumentData,
-    DocumentSnapshot,
-    FieldTransform,
-    FirestoreDocument,
-    FirestoreValue,
-    TransactionOptions,
-    Write,
-    WriteResult,
-} from "./types.js";
+export * from "./types.js";

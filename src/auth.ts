@@ -1,10 +1,5 @@
 import { importPKCS8, SignJWT } from "jose";
-
-export interface AuthConfig {
-    projectId: string;
-    privateKey: string;
-    clientEmail: string;
-}
+import type { AuthConfig } from "./types.js";
 
 export async function createJWT(config: AuthConfig): Promise<string> {
     const now = Math.floor(Date.now() / 1000);
