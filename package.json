@@ -24,8 +24,9 @@
     "bugs": {
         "url": "https://github.com/JacobLinCool/fires2rest/issues"
     },
-    "homepage": "https://github.com/JacobLinCool/fires2rest#readme",
-    "packageManager": "pnpm@10.21.0",
+    "homepage": "https://jacoblincool.github.io/fires2rest",
+    "packageManager": "pnpm@10.27.0",
+    "types": "./dist/index.d.ts",
     "exports": {
         ".": "./dist/index.js",
         "./package.json": "./package.json"

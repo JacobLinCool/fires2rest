@@ -12,7 +12,7 @@ Firestore REST with Transactions → Firestore RES**T** → FirestoREST → Fire
 - ⚡ **Transaction support** - Atomic reads and writes with automatic retry
 - 🎯 **TypeScript first** - Full type safety with generics
 - 🌐 **Serverless ready** - Works in Cloudflare Workers, Deno, Bun, and any JS runtime
-- 📦 **Zero dependencies** - Only `jose` for JWT auth
+- 📦 **Lightweight** - The only dependency is `jose` for JWT auth
 - 🔄 **FieldValue support** - serverTimestamp, increment, delete, arrayUnion, arrayRemove
 
 ## Installation
@@ -86,6 +86,8 @@ const result = await db.runTransaction(async (txn) => {
 ```
 
 ## API Reference
+
+See [API Reference](https://jacoblincool.github.io/fires2rest) for detailed documentation.
 
 ### `Firestore`
 
