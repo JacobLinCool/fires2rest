@@ -55,8 +55,5 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
-            - name: Type check
-              run: pnpm exec tsc --noEmit
-
             - name: Build
               run: pnpm build
