@@ -1,6 +1,6 @@
 {
     "name": "fires2rest",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "description": "Lightweight Firestore REST API client with full transaction support for serverless environments",
     "type": "module",
     "keywords": [
