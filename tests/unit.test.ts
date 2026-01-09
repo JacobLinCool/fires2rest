@@ -553,6 +553,32 @@ describe("value.ts additional coverage", () => {
             expect(transforms).toHaveLength(1);
             expect(transforms[0].fieldPath).toBe("itemsSold.`item-001`");
         });
+
+        it("quotes dot-notation field paths with special characters", () => {
+            const transforms = extractFieldTransforms({
+                "itemsSold.item-001": FieldValue.increment(5),
+            });
+            expect(transforms).toHaveLength(1);
+            expect(transforms[0].fieldPath).toBe("itemsSold.`item-001`");
+        });
+
+        it("quotes multi-segment dot-notation paths segment-by-segment", () => {
+            const transforms = extractFieldTransforms({
+                "a.b-c.d-e": FieldValue.increment(1),
+            });
+            expect(transforms).toHaveLength(1);
+            expect(transforms[0].fieldPath).toBe("a.`b-c`.`d-e`");
+        });
+
+        it("handles dot-notation keys within nested objects", () => {
+            const transforms = extractFieldTransforms({
+                stats: {
+                    "itemsSold.item-001": FieldValue.increment(5),
+                },
+            });
+            expect(transforms).toHaveLength(1);
+            expect(transforms[0].fieldPath).toBe("stats.itemsSold.`item-001`");
+        });
     });
 
     describe("extractTransformFields", () => {
