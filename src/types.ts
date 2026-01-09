@@ -216,7 +216,8 @@ export interface BatchGetResponse {
 // ============================================================================
 
 /** Authentication configuration for Firestore */
-export interface AuthConfig {
+/** Configuration for using a service account */
+export interface ServiceAccountConfig {
     /** The Firebase project ID */
     projectId: string;
     /** The service account private key (PEM format) */
@@ -224,6 +225,17 @@ export interface AuthConfig {
     /** The service account email */
     clientEmail: string;
 }
+
+/** Configuration for using a pre-generated token (e.g. Firebase Auth ID token) */
+export interface TokenConfig {
+    /** The Firebase project ID */
+    projectId: string;
+    /** A function that returns a token */
+    token: () => string | Promise<string>;
+}
+
+/** Authentication configuration for Firestore */
+export type AuthConfig = ServiceAccountConfig | TokenConfig;
 
 /** Document data type - what users work with */
 export type DocumentData = Record<string, unknown>;

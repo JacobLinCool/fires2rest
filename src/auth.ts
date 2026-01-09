@@ -1,7 +1,7 @@
 import { importPKCS8, SignJWT } from "jose";
-import type { AuthConfig } from "./types.js";
+import type { ServiceAccountConfig } from "./types.js";
 
-export async function createJWT(config: AuthConfig): Promise<string> {
+export async function createJWT(config: ServiceAccountConfig): Promise<string> {
     const now = Math.floor(Date.now() / 1000);
     const payload = {
         iss: config.clientEmail,
@@ -28,7 +28,9 @@ export async function createJWT(config: AuthConfig): Promise<string> {
     }
 }
 
-export async function getFirestoreToken(config: AuthConfig): Promise<string> {
+export async function getFirestoreToken(
+    config: ServiceAccountConfig,
+): Promise<string> {
     const response = await fetch("https://oauth2.googleapis.com/token", {
         method: "POST",
         headers: {
