@@ -1,5 +1,11 @@
 # fires2rest
 
+## 0.1.2
+
+### Patch Changes
+
+- [#4](https://github.com/JacobLinCool/fires2rest/pull/4) [`1e13275`](https://github.com/JacobLinCool/fires2rest/commit/1e132753f68c37403bffcb224ec569d0fe7e1b7d) Thanks [@JacobLinCool](https://github.com/JacobLinCool)! - Fix field path quoting for dot-notation keys with multiple segments
+
 ## 0.1.1
 
 ### Patch Changes
