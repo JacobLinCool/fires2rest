@@ -1,5 +1,19 @@
 # fires2rest
 
+## 0.2.0
+
+### Minor Changes
+
+- [#8](https://github.com/JacobLinCool/fires2rest/pull/8) [`a10ad0b`](https://github.com/JacobLinCool/fires2rest/commit/a10ad0b907ce6a90b5097e420e6c2b16e0dd4f05) Thanks [@JacobLinCool](https://github.com/JacobLinCool)! - Add comprehensive query support for collections
+    - New `Query` class with fluent API for building Firestore queries
+    - Filter methods: `where()` with operators `==`, `!=`, `<`, `<=`, `>`, `>=`, `array-contains`, `in`, `not-in`, `array-contains-any`
+    - Order methods: `orderBy()` with ascending/descending direction
+    - Limit methods: `limit()`, `limitToLast()`, `offset()`
+    - Cursor pagination: `startAt()`, `startAfter()`, `endAt()`, `endBefore()`
+    - Field projection: `select()`
+    - Query execution: `get()` returns `QuerySnapshot`, `count()` returns aggregate count
+    - `CollectionReference` now extends `Query` and inherits all query methods
+
 ## 0.1.3
 
 ### Patch Changes
