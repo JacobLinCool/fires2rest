@@ -5,17 +5,18 @@
  */
 
 import { getFirestoreToken } from "./auth.js";
-import {
-    CollectionReference,
-    DocumentReference,
-    type FirestoreClientInterface,
-} from "./references.js";
+import { CollectionReference, DocumentReference } from "./references.js";
 import { Transaction } from "./transaction.js";
 import type {
+    Aggregation,
+    AggregationResult,
     AuthConfig,
     BeginTransactionResponse,
     CommitResponse,
+    FirestoreClientInterface,
     FirestoreDocument,
+    RunQueryResponseItem,
+    StructuredQuery,
     TransactionOptions,
     Write,
     WriteResult,
@@ -402,5 +403,113 @@ export class Firestore implements FirestoreClientInterface {
         }
 
         return response.json();
+    }
+
+    // ========================================================================
+    // Query Methods
+    // ========================================================================
+
+    /** @internal Run a structured query against a collection */
+    async _runQuery(
+        collectionPath: string,
+        query: StructuredQuery,
+        transactionId?: string,
+    ): Promise<RunQueryResponseItem[]> {
+        const token = await this._getToken();
+        const database = this._getDatabasePath();
+
+        // Extract collection ID from path
+        const pathParts = collectionPath.split("/");
+        const collectionId = pathParts[pathParts.length - 1];
+
+        // Build the parent path for the query
+        let parent = `${database}/documents`;
+        if (pathParts.length > 1) {
+            parent = `${database}/documents/${pathParts.slice(0, -1).join("/")}`;
+        }
+
+        // Add collection selector
+        const structuredQuery: StructuredQuery = {
+            ...query,
+            from: [{ collectionId }],
+        };
+
+        const body: Record<string, unknown> = { structuredQuery };
+        if (transactionId) {
+            body.transaction = transactionId;
+        }
+
+        const response = await fetch(`${API_BASE}/${parent}:runQuery`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`Failed to run query: ${JSON.stringify(error)}`);
+        }
+
+        const results: RunQueryResponseItem[] = await response.json();
+        return results;
+    }
+
+    /** @internal Run an aggregation query against a collection */
+    async _runAggregationQuery(
+        collectionPath: string,
+        query: StructuredQuery,
+        aggregations: Aggregation[],
+    ): Promise<AggregationResult> {
+        const token = await this._getToken();
+        const database = this._getDatabasePath();
+
+        // Extract collection ID from path
+        const pathParts = collectionPath.split("/");
+        const collectionId = pathParts[pathParts.length - 1];
+
+        // Build the parent path for the query
+        let parent = `${database}/documents`;
+        if (pathParts.length > 1) {
+            parent = `${database}/documents/${pathParts.slice(0, -1).join("/")}`;
+        }
+
+        // Add collection selector
+        const structuredQuery: StructuredQuery = {
+            ...query,
+            from: [{ collectionId }],
+        };
+
+        const body = {
+            structuredAggregationQuery: {
+                structuredQuery,
+                aggregations,
+            },
+        };
+
+        const response = await fetch(
+            `${API_BASE}/${parent}:runAggregationQuery`,
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(body),
+            },
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(
+                `Failed to run aggregation query: ${JSON.stringify(error)}`,
+            );
+        }
+
+        const results = await response.json();
+        // The response is an array with one element
+        return results[0] ?? { result: { aggregateFields: {} }, readTime: "" };
     }
 }

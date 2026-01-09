@@ -2,9 +2,11 @@
  * Document and Collection References
  */
 
+import { Query } from "./query.js";
 import type {
     DocumentData,
     DocumentSnapshot,
+    FirestoreClientInterface,
     FirestoreDocument,
     WriteResult,
 } from "./types.js";
@@ -66,25 +68,6 @@ export class DocumentSnapshotImpl<
 
         return current;
     }
-}
-
-// Type for the Firestore client interface needed by references
-export interface FirestoreClientInterface {
-    _getDocument(
-        path: string,
-        transactionId?: string,
-    ): Promise<FirestoreDocument | null>;
-    _getDocumentName(path: string): string;
-    _setDocument(
-        path: string,
-        data: Record<string, unknown>,
-        options?: { merge?: boolean },
-    ): Promise<WriteResult>;
-    _updateDocument(
-        path: string,
-        data: Record<string, unknown>,
-    ): Promise<WriteResult>;
-    _deleteDocument(path: string): Promise<void>;
 }
 
 /**
@@ -159,15 +142,14 @@ export class DocumentReference<T = DocumentData> {
 
 /**
  * A reference to a Firestore collection.
+ * Extends Query to provide query methods.
  */
-export class CollectionReference<T = DocumentData> {
+export class CollectionReference<T = DocumentData> extends Query<T> {
     readonly id: string;
     readonly path: string;
 
-    constructor(
-        private readonly _firestore: FirestoreClientInterface,
-        path: string,
-    ) {
+    constructor(firestore: FirestoreClientInterface, path: string) {
+        super(firestore, path);
         this.path = path;
         const parts = path.split("/");
         this.id = parts[parts.length - 1];

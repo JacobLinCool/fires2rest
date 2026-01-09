@@ -104,7 +104,7 @@ export function isFieldValue(value: unknown): value is FieldValueType {
         typeof value === "object" &&
         value !== null &&
         FIELD_VALUE_MARKER in value &&
-        (value as Record<string, unknown>)[FIELD_VALUE_MARKER] === true
+        value[FIELD_VALUE_MARKER] === true
     );
 }
 
