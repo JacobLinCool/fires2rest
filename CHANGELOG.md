@@ -1,5 +1,13 @@
 # fires2rest
 
+## 0.1.3
+
+### Patch Changes
+
+- [#6](https://github.com/JacobLinCool/fires2rest/pull/6) [`cd2e38d`](https://github.com/JacobLinCool/fires2rest/commit/cd2e38d6f4957733179880347a91cbfb87ce11a9) Thanks [@JacobLinCool](https://github.com/JacobLinCool)! - Add user-provided token support
+
+    Introduces TokenConfig to allow Firestore clients to authenticate using a user-provided token function, in addition to service account credentials.
+
 ## 0.1.2
 
 ### Patch Changes
