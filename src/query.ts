@@ -43,53 +43,22 @@ export interface QueryConstraints {
 // Operator Mapping
 // ============================================================================
 
-const OPERATOR_MAP: Record<WhereFilterOp, Filter["fieldFilter"]> = {
-    "<": {
-        field: { fieldPath: "" },
-        op: "LESS_THAN",
-        value: { nullValue: null },
-    },
-    "<=": {
-        field: { fieldPath: "" },
-        op: "LESS_THAN_OR_EQUAL",
-        value: { nullValue: null },
-    },
-    "==": { field: { fieldPath: "" }, op: "EQUAL", value: { nullValue: null } },
-    "!=": {
-        field: { fieldPath: "" },
-        op: "NOT_EQUAL",
-        value: { nullValue: null },
-    },
-    ">=": {
-        field: { fieldPath: "" },
-        op: "GREATER_THAN_OR_EQUAL",
-        value: { nullValue: null },
-    },
-    ">": {
-        field: { fieldPath: "" },
-        op: "GREATER_THAN",
-        value: { nullValue: null },
-    },
-    "array-contains": {
-        field: { fieldPath: "" },
-        op: "ARRAY_CONTAINS",
-        value: { nullValue: null },
-    },
-    "array-contains-any": {
-        field: { fieldPath: "" },
-        op: "ARRAY_CONTAINS_ANY",
-        value: { nullValue: null },
-    },
-    in: { field: { fieldPath: "" }, op: "IN", value: { nullValue: null } },
-    "not-in": {
-        field: { fieldPath: "" },
-        op: "NOT_IN",
-        value: { nullValue: null },
-    },
+/** Maps SDK operators to Firestore REST API operator strings */
+const OPERATOR_MAP: Record<WhereFilterOp, Filter["fieldFilter"]["op"]> = {
+    "<": "LESS_THAN",
+    "<=": "LESS_THAN_OR_EQUAL",
+    "==": "EQUAL",
+    "!=": "NOT_EQUAL",
+    ">=": "GREATER_THAN_OR_EQUAL",
+    ">": "GREATER_THAN",
+    "array-contains": "ARRAY_CONTAINS",
+    "array-contains-any": "ARRAY_CONTAINS_ANY",
+    in: "IN",
+    "not-in": "NOT_IN",
 };
 
 function getRestOperator(op: WhereFilterOp): Filter["fieldFilter"]["op"] {
-    return OPERATOR_MAP[op]?.op ?? "EQUAL";
+    return OPERATOR_MAP[op];
 }
 
 // ============================================================================
