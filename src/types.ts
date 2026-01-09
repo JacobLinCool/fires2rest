@@ -215,8 +215,8 @@ export interface BatchGetResponse {
 // Configuration Types
 // ============================================================================
 
-/** Authentication configuration for Firestore */
-export interface AuthConfig {
+/** Configuration for using a service account */
+export interface ServiceAccountConfig {
     /** The Firebase project ID */
     projectId: string;
     /** The service account private key (PEM format) */
@@ -224,6 +224,25 @@ export interface AuthConfig {
     /** The service account email */
     clientEmail: string;
 }
+
+/** Configuration for using a pre-generated token (e.g. Firebase Auth ID token) */
+export interface TokenConfig {
+    /** The Firebase project ID */
+    projectId: string;
+    /**
+     * A function that returns a valid authentication token to use with the Firestore
+     * REST API, such as an OAuth 2.0 bearer token or a Firebase Auth ID token.
+     *
+     * This function is called on every outgoing request and the returned token is
+     * not cached by this library. If token reuse, caching, or automatic refresh
+     * (e.g. when using short‑lived access tokens) is desired, that logic must be
+     * implemented inside this function.
+     */
+    token: () => string | Promise<string>;
+}
+
+/** Authentication configuration for Firestore */
+export type AuthConfig = ServiceAccountConfig | TokenConfig;
 
 /** Document data type - what users work with */
 export type DocumentData = Record<string, unknown>;

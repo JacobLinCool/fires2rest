@@ -116,15 +116,21 @@ export class Firestore implements FirestoreClientInterface {
 
     /** @internal */
     async _getToken(): Promise<string> {
-        // Check if we have a valid token
-        if (this._token && Date.now() < this._tokenExpiry - 60000) {
-            return this._token;
-        }
+        // Check config type first
+        if ("privateKey" in this._config) {
+            // Service Account flow with caching
+            if (this._token && Date.now() < this._tokenExpiry - 60000) {
+                return this._token;
+            }
 
-        // Get new token
-        this._token = await getFirestoreToken(this._config);
-        this._tokenExpiry = Date.now() + 3600 * 1000; // 1 hour
-        return this._token;
+            this._token = await getFirestoreToken(this._config);
+            this._tokenExpiry = Date.now() + 3600 * 1000; // 1 hour
+            return this._token;
+        } else {
+            // Token/User flow: the provided function is invoked for each call.
+            // If the implementation performs its own caching, that behavior will be honored.
+            return await this._config.token();
+        }
     }
 
     /** @internal */
