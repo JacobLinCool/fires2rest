@@ -16,12 +16,7 @@ import {
     isIncrement,
     isServerTimestamp,
 } from "./field-value.js";
-import type {
-    ArrayValue,
-    FieldTransform,
-    FirestoreValue,
-    MapValue,
-} from "./types.js";
+import type { FieldTransform, FirestoreValue } from "./types.js";
 import { quoteFieldPath, quoteFieldPathSegment } from "./utils.js";
 
 // Re-export from field-value
@@ -435,13 +430,11 @@ export function fromFirestoreValue(value: FirestoreValue): unknown {
     }
 
     if ("arrayValue" in value) {
-        const arr = value as ArrayValue;
-        return (arr.arrayValue.values ?? []).map(fromFirestoreValue);
+        return (value.arrayValue.values ?? []).map(fromFirestoreValue);
     }
 
     if ("mapValue" in value) {
-        const map = value as MapValue;
-        return fromFirestoreFields(map.mapValue.fields ?? {});
+        return fromFirestoreFields(value.mapValue.fields ?? {});
     }
 
     throw new Error("Unknown Firestore value type");

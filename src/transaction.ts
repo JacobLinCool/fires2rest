@@ -2,14 +2,11 @@
  * Firestore Transaction
  */
 
-import {
-    DocumentReference,
-    DocumentSnapshotImpl,
-    type FirestoreClientInterface,
-} from "./references.js";
+import { DocumentReference, DocumentSnapshotImpl } from "./references.js";
 import type {
     DocumentData,
     DocumentSnapshot,
+    FirestoreClientInterface,
     FirestoreDocument,
     Write,
 } from "./types.js";

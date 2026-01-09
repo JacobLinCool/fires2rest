@@ -5,11 +5,7 @@
  */
 
 import { getFirestoreToken } from "./auth.js";
-import {
-    CollectionReference,
-    DocumentReference,
-    type FirestoreClientInterface,
-} from "./references.js";
+import { CollectionReference, DocumentReference } from "./references.js";
 import { Transaction } from "./transaction.js";
 import type {
     Aggregation,
@@ -17,6 +13,7 @@ import type {
     AuthConfig,
     BeginTransactionResponse,
     CommitResponse,
+    FirestoreClientInterface,
     FirestoreDocument,
     RunQueryResponseItem,
     StructuredQuery,

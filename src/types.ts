@@ -456,3 +456,41 @@ export interface AggregateQuerySnapshot {
     /** The count result */
     data(): { count: number };
 }
+
+// ============================================================================
+// Client Interface
+// ============================================================================
+
+/**
+ * Interface for the Firestore client.
+ * Used internally by Query, DocumentReference, and CollectionReference.
+ */
+export interface FirestoreClientInterface {
+    // Document operations
+    _getDocument(
+        path: string,
+        transactionId?: string,
+    ): Promise<FirestoreDocument | null>;
+    _getDocumentName(path: string): string;
+    _setDocument(
+        path: string,
+        data: Record<string, unknown>,
+        options?: { merge?: boolean },
+    ): Promise<WriteResult>;
+    _updateDocument(
+        path: string,
+        data: Record<string, unknown>,
+    ): Promise<WriteResult>;
+    _deleteDocument(path: string): Promise<void>;
+    // Query operations
+    _runQuery(
+        collectionPath: string,
+        query: StructuredQuery,
+        transactionId?: string,
+    ): Promise<RunQueryResponseItem[]>;
+    _runAggregationQuery(
+        collectionPath: string,
+        query: StructuredQuery,
+        aggregations: Aggregation[],
+    ): Promise<AggregationResult>;
+}

@@ -5,7 +5,8 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { Query, type QueryClientInterface } from "../src/query.js";
+import { Query } from "../src/query.js";
+import type { FirestoreClientInterface } from "../src/types.js";
 
 // ============================================================================
 // Mock Client
@@ -15,14 +16,19 @@ function createMockClient(
     mockResults: {
         document?: { name: string; fields: Record<string, unknown> };
     }[] = [],
-): QueryClientInterface {
+): FirestoreClientInterface {
     return {
+        _getDocument: vi.fn(),
+        _getDocumentName: vi.fn(),
+        _setDocument: vi.fn(),
+        _updateDocument: vi.fn(),
+        _deleteDocument: vi.fn(),
         _runQuery: vi.fn().mockResolvedValue(mockResults),
         _runAggregationQuery: vi.fn().mockResolvedValue({
             result: { aggregateFields: { count_alias: { integerValue: "5" } } },
             readTime: "2024-01-01T00:00:00Z",
         }),
-    };
+    } as FirestoreClientInterface;
 }
 
 // ============================================================================

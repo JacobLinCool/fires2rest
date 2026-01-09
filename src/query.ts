@@ -6,42 +6,22 @@
 
 import type {
     AggregateQuerySnapshot,
-    Aggregation,
     AggregationResult,
     Cursor,
     DocumentData,
     Filter,
+    FirestoreClientInterface,
     FirestoreDocument,
-    FirestoreValue,
     Order,
     OrderByDirection,
     Projection,
     QueryDocumentSnapshot,
     QuerySnapshot,
-    RunQueryResponseItem,
     StructuredQuery,
     WhereFilterOp,
 } from "./types.js";
 import { extractDocumentPath } from "./utils.js";
 import { fromFirestoreFields, toFirestoreValue } from "./value.js";
-
-// ============================================================================
-// Client Interface for Queries
-// ============================================================================
-
-/** Client interface for query operations */
-export interface QueryClientInterface {
-    _runQuery(
-        collectionPath: string,
-        query: StructuredQuery,
-        transactionId?: string,
-    ): Promise<RunQueryResponseItem[]>;
-    _runAggregationQuery(
-        collectionPath: string,
-        query: StructuredQuery,
-        aggregations: Aggregation[],
-    ): Promise<AggregationResult>;
-}
 
 // ============================================================================
 // Query Constraints (Internal)
@@ -209,14 +189,14 @@ class AggregateQuerySnapshotImpl implements AggregateQuerySnapshot {
  */
 export class Query<T = DocumentData> {
     /** @internal */
-    protected readonly _firestore: QueryClientInterface;
+    protected readonly _firestore: FirestoreClientInterface;
     /** @internal */
     protected readonly _collectionPath: string;
     /** @internal */
     protected readonly _constraints: QueryConstraints;
 
     constructor(
-        firestore: QueryClientInterface,
+        firestore: FirestoreClientInterface,
         collectionPath: string,
         constraints?: QueryConstraints,
     ) {
@@ -240,7 +220,7 @@ export class Query<T = DocumentData> {
             fieldFilter: {
                 field: { fieldPath },
                 op: getRestOperator(opStr),
-                value: toFirestoreValue(value) as FirestoreValue,
+                value: toFirestoreValue(value),
             },
         };
 
@@ -500,9 +480,7 @@ export class Query<T = DocumentData> {
         before: boolean;
     }): Cursor {
         return {
-            values: cursor.values.map(
-                (v) => toFirestoreValue(v) as FirestoreValue,
-            ),
+            values: cursor.values.map((v) => toFirestoreValue(v)),
             before: cursor.before,
         };
     }

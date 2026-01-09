@@ -2,10 +2,11 @@
  * Document and Collection References
  */
 
-import { Query, type QueryClientInterface } from "./query.js";
+import { Query } from "./query.js";
 import type {
     DocumentData,
     DocumentSnapshot,
+    FirestoreClientInterface,
     FirestoreDocument,
     WriteResult,
 } from "./types.js";
@@ -69,25 +70,6 @@ export class DocumentSnapshotImpl<
     }
 }
 
-// Type for the Firestore client interface needed by references
-export interface FirestoreClientInterface extends QueryClientInterface {
-    _getDocument(
-        path: string,
-        transactionId?: string,
-    ): Promise<FirestoreDocument | null>;
-    _getDocumentName(path: string): string;
-    _setDocument(
-        path: string,
-        data: Record<string, unknown>,
-        options?: { merge?: boolean },
-    ): Promise<WriteResult>;
-    _updateDocument(
-        path: string,
-        data: Record<string, unknown>,
-    ): Promise<WriteResult>;
-    _deleteDocument(path: string): Promise<void>;
-}
-
 /**
  * A reference to a Firestore document.
  */
@@ -108,10 +90,7 @@ export class DocumentReference<T = DocumentData> {
      */
     get parent(): CollectionReference<T> {
         const { collection } = parseDocumentPath(this.path);
-        return new CollectionReference<T>(
-            this._firestore as FirestoreClientInterface,
-            collection,
-        );
+        return new CollectionReference<T>(this._firestore, collection);
     }
 
     /**
@@ -119,7 +98,7 @@ export class DocumentReference<T = DocumentData> {
      */
     collection(collectionPath: string): CollectionReference {
         return new CollectionReference(
-            this._firestore as FirestoreClientInterface,
+            this._firestore,
             `${this.path}/${collectionPath}`,
         );
     }
@@ -183,7 +162,7 @@ export class CollectionReference<T = DocumentData> extends Query<T> {
     doc(documentId?: string): DocumentReference<T> {
         const docId = documentId ?? generateDocumentId();
         return new DocumentReference<T>(
-            this._firestore as FirestoreClientInterface,
+            this._firestore,
             `${this.path}/${docId}`,
         );
     }
