@@ -12,7 +12,7 @@ Firestore REST with Transactions → Firestore RES**T** → FirestoREST → Fire
 
 - 🔥 **Full Firestore REST API support** - CRUD operations via REST
 - ⚡ **Transaction support** - Atomic reads and writes with automatic retry
-- 🎯 **TypeScript first** - Full type safety with generics
+- 🔍 **Query support** - Filter, order, limit, and paginate collections
 - 🌐 **Serverless ready** - Works in Cloudflare Workers, Deno, Bun, and any JS runtime
 - 📦 **Lightweight** - The only dependency is `jose` for JWT auth
 - 🔄 **FieldValue support** - serverTimestamp, increment, delete, arrayUnion, arrayRemove
@@ -141,6 +141,57 @@ Reference to a collection.
 
 - `doc(id?)` - Get a `DocumentReference` (auto-generates ID if not provided)
 - `add(data)` - Add document with auto-generated ID
+- `where(field, op, value)` - Filter by field value
+- `orderBy(field, direction?)` - Order results
+- `limit(n)` / `limitToLast(n)` - Limit results
+- `offset(n)` - Skip results
+- `startAt(...values)` / `startAfter(...values)` - Cursor pagination
+- `endAt(...values)` / `endBefore(...values)` - Cursor pagination
+- `select(...fields)` - Field projection
+- `get()` - Execute query and return `QuerySnapshot`
+- `count()` - Count matching documents
+
+### Queries
+
+Build queries using chainable methods:
+
+```typescript
+// Filter, order, and limit
+const snapshot = await db
+    .collection("users")
+    .where("age", ">=", 18)
+    .where("active", "==", true)
+    .orderBy("createdAt", "desc")
+    .limit(10)
+    .get();
+
+// Iterate results
+snapshot.forEach((doc) => {
+    console.log(doc.id, doc.data());
+});
+
+// Count documents
+const countSnap = await db
+    .collection("users")
+    .where("active", "==", true)
+    .count();
+console.log("Active users:", countSnap.data().count);
+
+// Cursor-based pagination
+const page2 = await db
+    .collection("users")
+    .orderBy("name")
+    .startAfter("Alice")
+    .limit(10)
+    .get();
+```
+
+**Supported filter operators:**
+
+- `==`, `!=` - Equality
+- `<`, `<=`, `>`, `>=` - Comparison
+- `array-contains`, `array-contains-any` - Array queries
+- `in`, `not-in` - Inclusion queries
 
 ### `FieldValue`
 

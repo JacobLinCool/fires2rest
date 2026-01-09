@@ -6,6 +6,7 @@
 
 // Main client
 export * from "./client.js";
+export * from "./query.js";
 export * from "./references.js";
 export * from "./transaction.js";
 

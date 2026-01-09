@@ -268,3 +268,191 @@ export interface DocumentSnapshot<T = DocumentData> {
     /** Time the document was last updated */
     readonly updateTime?: Date;
 }
+
+// ============================================================================
+// Query Types
+// ============================================================================
+
+/** Filter operators for where() clauses */
+export type WhereFilterOp =
+    | "<"
+    | "<="
+    | "=="
+    | "!="
+    | ">="
+    | ">"
+    | "array-contains"
+    | "array-contains-any"
+    | "in"
+    | "not-in";
+
+/** Order direction for orderBy() */
+export type OrderByDirection = "asc" | "desc";
+
+// ============================================================================
+// REST API Structured Query Types
+// ============================================================================
+
+/** A selector for a collection */
+export interface CollectionSelector {
+    /** The collection ID (relative, not full path) */
+    collectionId: string;
+    /** When true, selects all descendant collections */
+    allDescendants?: boolean;
+}
+
+/** A field reference */
+export interface FieldReference {
+    /** The field path */
+    fieldPath: string;
+}
+
+/** An ordering on a field */
+export interface Order {
+    /** The field to order on */
+    field: FieldReference;
+    /** The direction to order by */
+    direction?: "ASCENDING" | "DESCENDING";
+}
+
+/** A position in a query result set */
+export interface Cursor {
+    /** Values that represent a position */
+    values: FirestoreValue[];
+    /** If the position is before the values */
+    before?: boolean;
+}
+
+/** A projection of fields to return */
+export interface Projection {
+    /** The fields to return */
+    fields: FieldReference[];
+}
+
+/** A filter on a specific field */
+export interface FieldFilter {
+    /** The field to filter on */
+    field: FieldReference;
+    /** The operator to filter by */
+    op:
+        | "LESS_THAN"
+        | "LESS_THAN_OR_EQUAL"
+        | "GREATER_THAN"
+        | "GREATER_THAN_OR_EQUAL"
+        | "EQUAL"
+        | "NOT_EQUAL"
+        | "ARRAY_CONTAINS"
+        | "IN"
+        | "ARRAY_CONTAINS_ANY"
+        | "NOT_IN";
+    /** The value to compare to */
+    value: FirestoreValue;
+}
+
+/** A filter that merges multiple other filters */
+export interface CompositeFilter {
+    /** The operator for combining multiple filters */
+    op: "AND" | "OR";
+    /** The list of filters to combine */
+    filters: Filter[];
+}
+
+/** A filter on a single field for unary operators */
+export interface UnaryFilter {
+    /** The unary operator to apply */
+    op: "IS_NAN" | "IS_NULL" | "IS_NOT_NAN" | "IS_NOT_NULL";
+    /** The field to apply the filter on */
+    field: FieldReference;
+}
+
+/** A filter */
+export interface Filter {
+    /** A composite filter */
+    compositeFilter?: CompositeFilter;
+    /** A filter on a field */
+    fieldFilter?: FieldFilter;
+    /** A filter with a unary operator */
+    unaryFilter?: UnaryFilter;
+}
+
+/** A structured query */
+export interface StructuredQuery {
+    /** The collections to query */
+    from?: CollectionSelector[];
+    /** The filter to apply */
+    where?: Filter;
+    /** The order to apply to the query results */
+    orderBy?: Order[];
+    /** A starting point for the query results */
+    startAt?: Cursor;
+    /** An end point for the query results */
+    endAt?: Cursor;
+    /** The number of documents to skip */
+    offset?: number;
+    /** The maximum number of results to return */
+    limit?: { value: number };
+    /** The projection to return */
+    select?: Projection;
+}
+
+/** A single result from a runQuery call */
+export interface RunQueryResponseItem {
+    /** A query result (if present) */
+    document?: FirestoreDocument;
+    /** The time at which the document was read */
+    readTime?: string;
+    /** If present, Firestore has completely finished the request */
+    done?: boolean;
+    /** The number of documents skipped (for offset) */
+    skippedResults?: number;
+}
+
+/** An aggregation to run on a query */
+export interface Aggregation {
+    /** Optional. The alias for the aggregation result */
+    alias?: string;
+    /** Count aggregation */
+    count?: Record<string, never>;
+    /** Sum aggregation */
+    sum?: { field: FieldReference };
+    /** Average aggregation */
+    avg?: { field: FieldReference };
+}
+
+/** Result of an aggregation query */
+export interface AggregationResult {
+    /** The aggregation results */
+    result: {
+        aggregateFields: Record<string, FirestoreValue>;
+    };
+    /** The time at which the aggregate was computed */
+    readTime: string;
+}
+
+/** A snapshot of query results */
+export interface QuerySnapshot<T = DocumentData> {
+    /** The documents in this snapshot */
+    readonly docs: QueryDocumentSnapshot<T>[];
+    /** True if there are no documents */
+    readonly empty: boolean;
+    /** The number of documents */
+    readonly size: number;
+    /** Execute a callback for each document */
+    forEach(callback: (doc: QueryDocumentSnapshot<T>) => void): void;
+}
+
+/** A snapshot of a document in a query result (always exists) */
+export interface QueryDocumentSnapshot<
+    T = DocumentData,
+> extends DocumentSnapshot<T> {
+    /** Always true for query document snapshots */
+    readonly exists: true;
+    /** The document data (always defined) */
+    data(): T;
+}
+
+/** A snapshot of an aggregate query result */
+export interface AggregateQuerySnapshot {
+    /** The count result */
+    data(): { count: number };
+}

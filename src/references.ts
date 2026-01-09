@@ -2,6 +2,7 @@
  * Document and Collection References
  */
 
+import { Query, type QueryClientInterface } from "./query.js";
 import type {
     DocumentData,
     DocumentSnapshot,
@@ -69,7 +70,7 @@ export class DocumentSnapshotImpl<
 }
 
 // Type for the Firestore client interface needed by references
-export interface FirestoreClientInterface {
+export interface FirestoreClientInterface extends QueryClientInterface {
     _getDocument(
         path: string,
         transactionId?: string,
@@ -107,7 +108,10 @@ export class DocumentReference<T = DocumentData> {
      */
     get parent(): CollectionReference<T> {
         const { collection } = parseDocumentPath(this.path);
-        return new CollectionReference<T>(this._firestore, collection);
+        return new CollectionReference<T>(
+            this._firestore as FirestoreClientInterface,
+            collection,
+        );
     }
 
     /**
@@ -115,7 +119,7 @@ export class DocumentReference<T = DocumentData> {
      */
     collection(collectionPath: string): CollectionReference {
         return new CollectionReference(
-            this._firestore,
+            this._firestore as FirestoreClientInterface,
             `${this.path}/${collectionPath}`,
         );
     }
@@ -159,15 +163,14 @@ export class DocumentReference<T = DocumentData> {
 
 /**
  * A reference to a Firestore collection.
+ * Extends Query to provide query methods.
  */
-export class CollectionReference<T = DocumentData> {
+export class CollectionReference<T = DocumentData> extends Query<T> {
     readonly id: string;
     readonly path: string;
 
-    constructor(
-        private readonly _firestore: FirestoreClientInterface,
-        path: string,
-    ) {
+    constructor(firestore: FirestoreClientInterface, path: string) {
+        super(firestore, path);
         this.path = path;
         const parts = path.split("/");
         this.id = parts[parts.length - 1];
@@ -180,7 +183,7 @@ export class CollectionReference<T = DocumentData> {
     doc(documentId?: string): DocumentReference<T> {
         const docId = documentId ?? generateDocumentId();
         return new DocumentReference<T>(
-            this._firestore,
+            this._firestore as FirestoreClientInterface,
             `${this.path}/${docId}`,
         );
     }
