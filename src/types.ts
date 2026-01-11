@@ -215,20 +215,8 @@ export interface BatchGetResponse {
 // Configuration Types
 // ============================================================================
 
-/** Configuration for using a service account */
-export interface ServiceAccountConfig {
-    /** The Firebase project ID */
-    projectId: string;
-    /** The service account private key (PEM format) */
-    privateKey: string;
-    /** The service account email */
-    clientEmail: string;
-}
-
-/** Configuration for using a pre-generated token (e.g. Firebase Auth ID token) */
-export interface TokenConfig {
-    /** The Firebase project ID */
-    projectId: string;
+/** Configuration for using a user-managed authentication token */
+export interface Auth {
     /**
      * A function that returns a valid authentication token to use with the Firestore
      * REST API, such as an OAuth 2.0 bearer token or a Firebase Auth ID token.
@@ -238,11 +226,18 @@ export interface TokenConfig {
      * (e.g. when using short‑lived access tokens) is desired, that logic must be
      * implemented inside this function.
      */
-    token: () => string | Promise<string>;
+    getToken(): Promise<string>;
 }
 
-/** Authentication configuration for Firestore */
-export type AuthConfig = ServiceAccountConfig | TokenConfig;
+/** Configuration for connecting to Firestore */
+export interface ConnectionConfig {
+    /** The Firebase project ID */
+    projectId: string;
+    /** The authentication provider */
+    auth: Auth;
+    /** The base URL for the Firestore REST API */
+    apiBaseUrl: string;
+}
 
 /** Document data type - what users work with */
 export type DocumentData = Record<string, unknown>;
@@ -390,7 +385,7 @@ export interface StructuredQuery {
     /** The number of documents to skip */
     offset?: number;
     /** The maximum number of results to return */
-    limit?: { value: number };
+    limit?: number;
     /** The projection to return */
     select?: Projection;
 }

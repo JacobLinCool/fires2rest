@@ -14,6 +14,7 @@ Firestore REST with Transactions → Firestore RES**T** → FirestoREST → Fire
 - ⚡ **Transaction support** - Atomic reads and writes with automatic retry
 - 🔍 **Query support** - Filter, order, limit, and paginate collections
 - 🌐 **Serverless ready** - Works in Cloudflare Workers, Deno, Bun, and any JS runtime
+- 🧪 **Emulator support** - Local development with Firebase Emulator
 - 📦 **Lightweight** - The only dependency is `jose` for JWT auth
 - 🔄 **FieldValue support** - serverTimestamp, increment, delete, arrayUnion, arrayRemove
 
@@ -29,8 +30,7 @@ pnpm install fires2rest
 import { Firestore, FieldValue } from "fires2rest";
 
 // Initialize with service account credentials
-const db = new Firestore({
-    projectId: "your-project-id",
+const db = Firestore.useServiceAccount("your-project-id", {
     clientEmail: "your-service-account@project.iam.gserviceaccount.com",
     privateKey: "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
 });
@@ -95,14 +95,23 @@ See [API Reference](https://jacoblincool.github.io/fires2rest) for detailed docu
 
 Main client class.
 
-```typescript
-const db = new Firestore(config: AuthConfig, databaseId?: string);
-```
+**Static Factory Methods:**
 
-- `config.projectId` - Firebase project ID
-- `config.clientEmail` - Service account email
-- `config.privateKey` - Service account private key (PEM format)
-- `databaseId` - Optional, defaults to `"(default)"`
+```typescript
+// Using service account (for server-side usage)
+const db = Firestore.useServiceAccount(projectId, {
+    clientEmail: "service-account@project.iam.gserviceaccount.com",
+    privateKey: "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+}, databaseId?);
+
+// Using Firebase Emulator (for local development)
+const db = Firestore.useEmulator({
+    emulatorHost: "127.0.0.1:8080",  // optional, defaults to "127.0.0.1:8080"
+    projectId: "demo-project",       // optional, defaults to "demo-no-project"
+    databaseId: "(default)",         // optional, defaults to "(default)"
+    admin: true,                     // optional, defaults to true (bypasses security rules)
+});
+```
 
 **Methods:**
 
@@ -241,6 +250,30 @@ const user = snap.data(); // User | undefined
 console.log(user?.name); // TypeScript knows this is string
 ```
 
+## Emulator Support
+
+Use the Firebase Emulator for local development and testing:
+
+```typescript
+import { Firestore } from "fires2rest";
+
+// Connect to local emulator with all defaults
+const db = Firestore.useEmulator();
+
+// Or customize the connection
+const db = Firestore.useEmulator({
+    emulatorHost: "127.0.0.1:8095",
+    projectId: "demo-no-project",
+    admin: true,  // bypass security rules
+});
+```
+
+Start the Firebase Emulator:
+
+```bash
+pnpm firebase emulators:start
+```
+
 ## Environment Variables
 
 Set up your service account credentials:
@@ -249,6 +282,9 @@ Set up your service account credentials:
 FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_CLIENT_EMAIL=your-service-account@project.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+# For emulator usage
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8095
 ```
 
 ## License

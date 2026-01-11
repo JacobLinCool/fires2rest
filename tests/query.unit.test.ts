@@ -222,7 +222,7 @@ describe("Query", () => {
             const query = new Query(client, "users").limit(10);
             const structured = query._toStructuredQuery();
 
-            expect(structured.limit).toEqual({ value: 10 });
+            expect(structured.limit).toBe(10);
         });
 
         it("creates a query with offset", () => {
@@ -238,7 +238,7 @@ describe("Query", () => {
             const query = new Query(client, "users").limit(10).offset(20);
             const structured = query._toStructuredQuery();
 
-            expect(structured.limit).toEqual({ value: 10 });
+            expect(structured.limit).toBe(10);
             expect(structured.offset).toBe(20);
         });
 
@@ -267,7 +267,7 @@ describe("Query", () => {
 
             // Direction should be reversed in the structured query
             expect(structured.orderBy?.[0].direction).toBe("DESCENDING");
-            expect(structured.limit).toEqual({ value: 5 });
+            expect(structured.limit).toBe(5);
         });
 
         it("throws for negative limitToLast", () => {
@@ -373,7 +373,7 @@ describe("Query", () => {
 
             expect(structured.where?.compositeFilter).toBeDefined();
             expect(structured.orderBy).toHaveLength(1);
-            expect(structured.limit).toEqual({ value: 10 });
+            expect(structured.limit).toBe(10);
             expect(structured.offset).toBe(5);
         });
 
@@ -386,7 +386,7 @@ describe("Query", () => {
             expect(query1._toStructuredQuery().where).toBeUndefined();
             expect(query2._toStructuredQuery().where).toBeDefined();
             expect(query2._toStructuredQuery().limit).toBeUndefined();
-            expect(query3._toStructuredQuery().limit).toEqual({ value: 10 });
+            expect(query3._toStructuredQuery().limit).toBe(10);
         });
     });
 

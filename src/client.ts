@@ -4,15 +4,20 @@
  * Main client implementation for Firestore REST API with transaction support.
  */
 
-import { getFirestoreToken } from "./auth.js";
+import {
+    NoAuth,
+    ServiceAccountAuth,
+    ServiceAccountAuthConfig,
+} from "./auth.js";
 import { CollectionReference, DocumentReference } from "./references.js";
 import { Transaction } from "./transaction.js";
 import type {
     Aggregation,
     AggregationResult,
-    AuthConfig,
+    BatchGetResponse,
     BeginTransactionResponse,
     CommitResponse,
+    ConnectionConfig,
     FirestoreClientInterface,
     FirestoreDocument,
     RunQueryResponseItem,
@@ -31,21 +36,52 @@ import {
     toFirestoreValue,
 } from "./value.js";
 
-const API_BASE = "https://firestore.googleapis.com/v1";
+const DEFAULT_API_BASE = "https://firestore.googleapis.com/v1";
 const DEFAULT_DATABASE = "(default)";
 
 /**
  * Firestore REST API client.
  */
 export class Firestore implements FirestoreClientInterface {
-    private readonly _config: AuthConfig;
-    private readonly _databaseId: string;
-    private _token: string | null = null;
-    private _tokenExpiry: number = 0;
+    constructor(
+        private readonly _config: ConnectionConfig,
+        private readonly _databaseId: string,
+    ) {}
 
-    constructor(config: AuthConfig, databaseId: string = DEFAULT_DATABASE) {
-        this._config = config;
-        this._databaseId = databaseId;
+    static useServiceAccount(
+        projectId: string,
+        config: ServiceAccountAuthConfig,
+        databaseId: string = DEFAULT_DATABASE,
+    ): Firestore {
+        return new Firestore(
+            {
+                apiBaseUrl: DEFAULT_API_BASE,
+                projectId,
+                auth: new ServiceAccountAuth(config),
+            },
+            databaseId,
+        );
+    }
+
+    static useEmulator({
+        emulatorHost = "127.0.0.1:8080",
+        projectId = "demo-no-project",
+        databaseId = DEFAULT_DATABASE,
+        admin = true,
+    }: {
+        emulatorHost?: string;
+        projectId?: string;
+        databaseId?: string;
+        admin?: boolean;
+    } = {}): Firestore {
+        return new Firestore(
+            {
+                apiBaseUrl: `http://${emulatorHost}/v1`,
+                projectId,
+                auth: new NoAuth(admin ? "owner" : ""),
+            },
+            databaseId,
+        );
     }
 
     /**
@@ -117,21 +153,23 @@ export class Firestore implements FirestoreClientInterface {
 
     /** @internal */
     async _getToken(): Promise<string> {
-        // Check config type first
-        if ("privateKey" in this._config) {
-            // Service Account flow with caching
-            if (this._token && Date.now() < this._tokenExpiry - 60000) {
-                return this._token;
-            }
+        return this._config.auth.getToken();
+    }
 
-            this._token = await getFirestoreToken(this._config);
-            this._tokenExpiry = Date.now() + 3600 * 1000; // 1 hour
-            return this._token;
-        } else {
-            // Token/User flow: the provided function is invoked for each call.
-            // If the implementation performs its own caching, that behavior will be honored.
-            return await this._config.token();
+    /** @internal */
+    async _getHeaders(hasBody = false): Promise<Record<string, string>> {
+        const token = await this._getToken();
+        const headers: Record<string, string> = {};
+
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
         }
+
+        if (hasBody) {
+            headers["Content-Type"] = "application/json";
+        }
+
+        return headers;
     }
 
     /** @internal */
@@ -149,19 +187,40 @@ export class Firestore implements FirestoreClientInterface {
         path: string,
         transactionId?: string,
     ): Promise<FirestoreDocument | null> {
-        const token = await this._getToken();
         const docName = this._getDocumentName(path);
 
-        let url = `${API_BASE}/${docName}`;
         if (transactionId) {
-            url += `?transaction=${encodeURIComponent(transactionId)}`;
+            const database = this._getDatabasePath();
+            const response = await fetch(
+                `${this._config.apiBaseUrl}/${database}/documents:batchGet`,
+                {
+                    method: "POST",
+                    headers: await this._getHeaders(true),
+                    body: JSON.stringify({
+                        documents: [docName],
+                        transaction: transactionId,
+                    }),
+                },
+            );
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(
+                    `Failed to batch get document: ${JSON.stringify(error)}`,
+                );
+            }
+
+            const results: BatchGetResponse[] = await response.json();
+            const result = results[0];
+            if (result?.found) {
+                return result.found;
+            }
+            return null;
         }
 
-        const response = await fetch(url, {
+        const response = await fetch(`${this._config.apiBaseUrl}/${docName}`, {
             method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+            headers: await this._getHeaders(),
         });
 
         if (response.status === 404) {
@@ -182,7 +241,6 @@ export class Firestore implements FirestoreClientInterface {
         data: Record<string, unknown>,
         options?: { merge?: boolean },
     ): Promise<WriteResult> {
-        const token = await this._getToken();
         const database = this._getDatabasePath();
         const docName = this._getDocumentName(path);
 
@@ -208,13 +266,10 @@ export class Firestore implements FirestoreClientInterface {
         }
 
         const response = await fetch(
-            `${API_BASE}/${database}/documents:commit`,
+            `${this._config.apiBaseUrl}/${database}/documents:commit`,
             {
                 method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
+                headers: await this._getHeaders(true),
                 body: JSON.stringify({ writes }),
             },
         );
@@ -233,7 +288,6 @@ export class Firestore implements FirestoreClientInterface {
         path: string,
         data: Record<string, unknown>,
     ): Promise<WriteResult> {
-        const token = await this._getToken();
         const database = this._getDatabasePath();
         const docName = this._getDocumentName(path);
 
@@ -290,13 +344,10 @@ export class Firestore implements FirestoreClientInterface {
         }
 
         const response = await fetch(
-            `${API_BASE}/${database}/documents:commit`,
+            `${this._config.apiBaseUrl}/${database}/documents:commit`,
             {
                 method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
+                headers: await this._getHeaders(true),
                 body: JSON.stringify({ writes }),
             },
         );
@@ -314,18 +365,14 @@ export class Firestore implements FirestoreClientInterface {
 
     /** @internal */
     async _deleteDocument(path: string): Promise<void> {
-        const token = await this._getToken();
         const database = this._getDatabasePath();
         const docName = this._getDocumentName(path);
 
         const response = await fetch(
-            `${API_BASE}/${database}/documents:commit`,
+            `${this._config.apiBaseUrl}/${database}/documents:commit`,
             {
                 method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
+                headers: await this._getHeaders(true),
                 body: JSON.stringify({
                     writes: [{ delete: docName }],
                 }),
@@ -342,7 +389,6 @@ export class Firestore implements FirestoreClientInterface {
 
     /** @internal */
     async _beginTransaction(retryTransaction?: string): Promise<string> {
-        const token = await this._getToken();
         const database = this._getDatabasePath();
 
         const options: TransactionOptions = {
@@ -350,13 +396,10 @@ export class Firestore implements FirestoreClientInterface {
         };
 
         const response = await fetch(
-            `${API_BASE}/${database}/documents:beginTransaction`,
+            `${this._config.apiBaseUrl}/${database}/documents:beginTransaction`,
             {
                 method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
+                headers: await this._getHeaders(true),
                 body: JSON.stringify({ options }),
             },
         );
@@ -377,17 +420,13 @@ export class Firestore implements FirestoreClientInterface {
         transactionId: string,
         writes: Write[],
     ): Promise<CommitResponse> {
-        const token = await this._getToken();
         const database = this._getDatabasePath();
 
         const response = await fetch(
-            `${API_BASE}/${database}/documents:commit`,
+            `${this._config.apiBaseUrl}/${database}/documents:commit`,
             {
                 method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
+                headers: await this._getHeaders(true),
                 body: JSON.stringify({
                     writes,
                     transaction: transactionId,
@@ -415,7 +454,6 @@ export class Firestore implements FirestoreClientInterface {
         query: StructuredQuery,
         transactionId?: string,
     ): Promise<RunQueryResponseItem[]> {
-        const token = await this._getToken();
         const database = this._getDatabasePath();
 
         // Extract collection ID from path
@@ -439,14 +477,14 @@ export class Firestore implements FirestoreClientInterface {
             body.transaction = transactionId;
         }
 
-        const response = await fetch(`${API_BASE}/${parent}:runQuery`, {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
+        const response = await fetch(
+            `${this._config.apiBaseUrl}/${parent}:runQuery`,
+            {
+                method: "POST",
+                headers: await this._getHeaders(true),
+                body: JSON.stringify(body),
             },
-            body: JSON.stringify(body),
-        });
+        );
 
         if (!response.ok) {
             const error = await response.json();
@@ -463,7 +501,6 @@ export class Firestore implements FirestoreClientInterface {
         query: StructuredQuery,
         aggregations: Aggregation[],
     ): Promise<AggregationResult> {
-        const token = await this._getToken();
         const database = this._getDatabasePath();
 
         // Extract collection ID from path
@@ -490,13 +527,10 @@ export class Firestore implements FirestoreClientInterface {
         };
 
         const response = await fetch(
-            `${API_BASE}/${parent}:runAggregationQuery`,
+            `${this._config.apiBaseUrl}/${parent}:runAggregationQuery`,
             {
                 method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
+                headers: await this._getHeaders(true),
                 body: JSON.stringify(body),
             },
         );

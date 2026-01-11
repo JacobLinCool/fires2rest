@@ -1,5 +1,8 @@
+import { config } from "dotenv";
 import { describe, expect, it, vi } from "vitest";
 import { Firestore } from "../src/client.js";
+
+config();
 
 // Mock global fetch
 const globalFetch = vi.fn();
@@ -10,10 +13,16 @@ describe("Firestore Client - Token Config", () => {
         const token = "dynamic-token-456";
         const tokenFn = vi.fn().mockResolvedValue(token);
         const projectId = "test-project";
-        const client = new Firestore({
-            projectId,
-            token: tokenFn,
-        });
+        const client = new Firestore(
+            {
+                apiBaseUrl: process.env.FIRESTORE_EMULATOR_HOST
+                    ? `http://${process.env.FIRESTORE_EMULATOR_HOST}/v1`
+                    : "https://firestore.googleapis.com/v1",
+                projectId,
+                auth: { getToken: tokenFn },
+            },
+            "(default)",
+        );
 
         // Mock a successful response
         globalFetch.mockResolvedValueOnce({
@@ -49,10 +58,16 @@ describe("Firestore Client - Token Config", () => {
             .mockResolvedValueOnce(token2);
 
         const projectId = "test-project";
-        const client = new Firestore({
-            projectId,
-            token: tokenFn,
-        });
+        const client = new Firestore(
+            {
+                apiBaseUrl: process.env.FIRESTORE_EMULATOR_HOST
+                    ? `http://${process.env.FIRESTORE_EMULATOR_HOST}/v1`
+                    : "https://firestore.googleapis.com/v1",
+                projectId,
+                auth: { getToken: tokenFn },
+            },
+            "(default)",
+        );
 
         // Mock successful responses
         globalFetch.mockResolvedValue({

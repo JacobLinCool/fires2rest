@@ -11,11 +11,12 @@ import { Firestore } from "../src/index.js";
 
 config();
 
-const projectId = process.env.FIREBASE_PROJECT_ID;
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
-
-const ENABLED = !!(projectId && clientEmail && privateKey);
+const ENABLED = !!(
+    process.env.FIRESTORE_EMULATOR_HOST ||
+    (process.env.FIREBASE_PROJECT_ID &&
+        process.env.FIREBASE_CLIENT_EMAIL &&
+        process.env.FIREBASE_PRIVATE_KEY)
+);
 const COLLECTION = "fires2rest-query-testing";
 
 /** Test document type */
@@ -32,11 +33,17 @@ describe.skipIf(!ENABLED)("Query Integration Tests", () => {
     const createdDocs: string[] = [];
 
     beforeAll(async () => {
-        db = new Firestore({
-            projectId: projectId!,
-            clientEmail: clientEmail!,
-            privateKey: privateKey!,
-        });
+        db = process.env.FIRESTORE_EMULATOR_HOST
+            ? Firestore.useEmulator({
+                  emulatorHost: process.env.FIRESTORE_EMULATOR_HOST,
+              })
+            : Firestore.useServiceAccount(process.env.FIREBASE_PROJECT_ID!, {
+                  clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
+                  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(
+                      /\\n/g,
+                      "\n",
+                  )!,
+              });
 
         // Create test documents
         const testData = [
@@ -239,6 +246,27 @@ describe.skipIf(!ENABLED)("Query Integration Tests", () => {
                 .get();
 
             expect(snapshot.size).toBe(3);
+        });
+
+        it("limits to last results", async () => {
+            const snapshot = await db
+                .collection(COLLECTION)
+                .orderBy("name")
+                .limitToLast(3)
+                .get();
+
+            expect(snapshot.size).toBe(3);
+            // With limitToLast(3) and orderBy("name"), it should be the last 3 alphabetically
+            // Alice, Bob, Charlie, Diana, Eve
+            // Last 3: Charlie, Diana, Eve
+            const names = snapshot.docs.map((d) => d.data().name);
+            expect(names).toContain("Charlie");
+            expect(names).toContain("Diana");
+            expect(names).toContain("Eve");
+            // They should also be in the original order (ABC order) because we reverse them back in SDK
+            expect(names[0]).toBe("Charlie");
+            expect(names[1]).toBe("Diana");
+            expect(names[2]).toBe("Eve");
         });
 
         it("offsets results", async () => {

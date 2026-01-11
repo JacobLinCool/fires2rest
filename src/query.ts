@@ -416,7 +416,7 @@ export class Query<T = DocumentData> {
         const limitValue =
             this._constraints.limit ?? this._constraints.limitToLast;
         if (limitValue !== undefined) {
-            query.limit = { value: limitValue };
+            query.limit = limitValue;
         }
 
         // Build offset

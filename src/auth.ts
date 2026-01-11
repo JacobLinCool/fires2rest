@@ -1,7 +1,16 @@
 import { importPKCS8, SignJWT } from "jose";
-import type { ServiceAccountConfig } from "./types.js";
+import type { Auth } from "./types.js";
 
-export async function createJWT(config: ServiceAccountConfig): Promise<string> {
+export interface ServiceAccountAuthConfig {
+    /** The service account private key (PEM format) */
+    privateKey: string;
+    /** The service account email */
+    clientEmail: string;
+}
+
+export async function createJWT(
+    config: ServiceAccountAuthConfig,
+): Promise<string> {
     const now = Math.floor(Date.now() / 1000);
     const payload = {
         iss: config.clientEmail,
@@ -29,7 +38,7 @@ export async function createJWT(config: ServiceAccountConfig): Promise<string> {
 }
 
 export async function getFirestoreToken(
-    config: ServiceAccountConfig,
+    config: ServiceAccountAuthConfig,
 ): Promise<string> {
     const response = await fetch("https://oauth2.googleapis.com/token", {
         method: "POST",
@@ -48,4 +57,30 @@ export async function getFirestoreToken(
     }
 
     return data.access_token;
+}
+
+export class ServiceAccountAuth implements Auth {
+    private _token: string | null = null;
+    private _tokenExpiry: number = 0;
+
+    constructor(private readonly _config: ServiceAccountAuthConfig) {}
+
+    async getToken(): Promise<string> {
+        if (this._token && Date.now() < this._tokenExpiry - 60000) {
+            return this._token;
+        }
+
+        this._token = await getFirestoreToken(this._config);
+        this._tokenExpiry = Date.now() + 3600 * 1000; // 1 hour
+
+        return this._token;
+    }
+}
+
+export class NoAuth implements Auth {
+    constructor(private readonly token: string = "") {}
+
+    async getToken(): Promise<string> {
+        return this.token;
+    }
 }

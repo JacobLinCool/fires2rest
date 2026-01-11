@@ -755,6 +755,11 @@ describe("references.ts", () => {
             _setDocument: async () => ({}),
             _updateDocument: async () => ({}),
             _deleteDocument: async () => {},
+            _runQuery: async () => [],
+            _runAggregationQuery: async () => ({
+                result: { aggregateFields: {} },
+                readTime: new Date().toISOString(),
+            }),
         };
 
         it("parent returns CollectionReference", () => {
@@ -790,6 +795,11 @@ describe("references.ts", () => {
             _setDocument: async () => ({}),
             _updateDocument: async () => ({}),
             _deleteDocument: async () => {},
+            _runQuery: async () => [],
+            _runAggregationQuery: async () => ({
+                result: { aggregateFields: {} },
+                readTime: new Date().toISOString(),
+            }),
         };
 
         it("doc without ID generates random ID", () => {
@@ -823,21 +833,18 @@ describe("transaction.ts", () => {
         _setDocument: async () => ({}),
         _updateDocument: async () => ({}),
         _deleteDocument: async () => {},
+        _runQuery: async () => [],
+        _runAggregationQuery: async () => ({
+            result: { aggregateFields: {} },
+            readTime: new Date().toISOString(),
+        }),
     });
 
     describe("set with merge option", () => {
         it("creates write with updateMask when merge is true", () => {
             const mockFs = createMockFirestore();
             const txn = new Transaction(mockFs, "test-transaction-id");
-            const docRef = new DocumentReference(
-                {
-                    ...mockFs,
-                    _setDocument: async () => ({}),
-                    _updateDocument: async () => ({}),
-                    _deleteDocument: async () => {},
-                },
-                "users/user1",
-            );
+            const docRef = new DocumentReference(mockFs, "users/user1");
 
             txn.set(docRef, { name: "Alice", age: 30 }, { merge: true });
 
@@ -851,15 +858,7 @@ describe("transaction.ts", () => {
         it("creates write without updateMask when merge is false", () => {
             const mockFs = createMockFirestore();
             const txn = new Transaction(mockFs, "test-transaction-id");
-            const docRef = new DocumentReference(
-                {
-                    ...mockFs,
-                    _setDocument: async () => ({}),
-                    _updateDocument: async () => ({}),
-                    _deleteDocument: async () => {},
-                },
-                "users/user1",
-            );
+            const docRef = new DocumentReference(mockFs, "users/user1");
 
             txn.set(docRef, { name: "Bob" });
 
@@ -873,15 +872,7 @@ describe("transaction.ts", () => {
         it("includes updateTransforms for FieldValue sentinels", () => {
             const mockFs = createMockFirestore();
             const txn = new Transaction(mockFs, "test-transaction-id");
-            const docRef = new DocumentReference(
-                {
-                    ...mockFs,
-                    _setDocument: async () => ({}),
-                    _updateDocument: async () => ({}),
-                    _deleteDocument: async () => {},
-                },
-                "users/user1",
-            );
+            const docRef = new DocumentReference(mockFs, "users/user1");
 
             txn.set(docRef, {
                 name: "Charlie",
@@ -900,15 +891,7 @@ describe("transaction.ts", () => {
         it("includes updateTransforms for increment", () => {
             const mockFs = createMockFirestore();
             const txn = new Transaction(mockFs, "test-transaction-id");
-            const docRef = new DocumentReference(
-                {
-                    ...mockFs,
-                    _setDocument: async () => ({}),
-                    _updateDocument: async () => ({}),
-                    _deleteDocument: async () => {},
-                },
-                "counter/counter1",
-            );
+            const docRef = new DocumentReference(mockFs, "counter/counter1");
 
             txn.update(docRef, {
                 value: FieldValue.increment(5),
@@ -925,15 +908,7 @@ describe("transaction.ts", () => {
         it("handles delete fields in update", () => {
             const mockFs = createMockFirestore();
             const txn = new Transaction(mockFs, "test-transaction-id");
-            const docRef = new DocumentReference(
-                {
-                    ...mockFs,
-                    _setDocument: async () => ({}),
-                    _updateDocument: async () => ({}),
-                    _deleteDocument: async () => {},
-                },
-                "docs/doc1",
-            );
+            const docRef = new DocumentReference(mockFs, "docs/doc1");
 
             txn.update(docRef, {
                 keepField: "value",
@@ -960,24 +935,8 @@ describe("transaction.ts", () => {
         it("returns this for chaining", () => {
             const mockFs = createMockFirestore();
             const txn = new Transaction(mockFs, "test-txn");
-            const docRef1 = new DocumentReference(
-                {
-                    ...mockFs,
-                    _setDocument: async () => ({}),
-                    _updateDocument: async () => ({}),
-                    _deleteDocument: async () => {},
-                },
-                "docs/doc1",
-            );
-            const docRef2 = new DocumentReference(
-                {
-                    ...mockFs,
-                    _setDocument: async () => ({}),
-                    _updateDocument: async () => ({}),
-                    _deleteDocument: async () => {},
-                },
-                "docs/doc2",
-            );
+            const docRef1 = new DocumentReference(mockFs, "docs/doc1");
+            const docRef2 = new DocumentReference(mockFs, "docs/doc2");
 
             const result = txn
                 .set(docRef1, { a: 1 })

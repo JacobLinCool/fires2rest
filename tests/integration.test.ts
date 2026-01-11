@@ -11,11 +11,12 @@ import { FieldValue, Firestore } from "../src/index.js";
 
 config();
 
-const projectId = process.env.FIREBASE_PROJECT_ID;
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
-
-const ENABLED = !!(projectId && clientEmail && privateKey);
+const ENABLED = !!(
+    process.env.FIRESTORE_EMULATOR_HOST ||
+    (process.env.FIREBASE_PROJECT_ID &&
+        process.env.FIREBASE_CLIENT_EMAIL &&
+        process.env.FIREBASE_PRIVATE_KEY)
+);
 const COLLECTION = "fires2rest-testing";
 
 describe.skipIf(!ENABLED)("Integration Tests", () => {
@@ -23,11 +24,17 @@ describe.skipIf(!ENABLED)("Integration Tests", () => {
     const createdDocs: string[] = [];
 
     beforeAll(() => {
-        db = new Firestore({
-            projectId: projectId!,
-            clientEmail: clientEmail!,
-            privateKey: privateKey!,
-        });
+        db = process.env.FIRESTORE_EMULATOR_HOST
+            ? Firestore.useEmulator({
+                  emulatorHost: process.env.FIRESTORE_EMULATOR_HOST,
+              })
+            : Firestore.useServiceAccount(process.env.FIREBASE_PROJECT_ID!, {
+                  clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
+                  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(
+                      /\\n/g,
+                      "\n",
+                  )!,
+              });
     });
 
     afterAll(async () => {

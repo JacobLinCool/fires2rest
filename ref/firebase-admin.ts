@@ -5,13 +5,22 @@ import { run } from "./shared";
 
 config();
 
-const app = initializeApp({
-    credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    }),
-});
+const app = initializeApp(
+    process.env.FIRESTORE_EMULATOR_HOST
+        ? {
+              projectId: "demo-no-project",
+          }
+        : {
+              credential: cert({
+                  projectId: process.env.FIREBASE_PROJECT_ID,
+                  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(
+                      /\\n/g,
+                      "\n",
+                  ),
+              }),
+          },
+);
 
 const db = getFirestore(app);
 
