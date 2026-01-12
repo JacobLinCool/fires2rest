@@ -264,7 +264,7 @@ const db = Firestore.useEmulator();
 const db = Firestore.useEmulator({
     emulatorHost: "127.0.0.1:8095",
     projectId: "demo-no-project",
-    admin: true,  // bypass security rules
+    admin: true, // bypass security rules
 });
 ```
 

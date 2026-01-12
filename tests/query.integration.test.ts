@@ -190,8 +190,7 @@ describe.skipIf(!ENABLED)("Query Integration Tests", () => {
         });
 
         // NOTE: This test requires a composite index (active + age) to be created in Firebase Console
-        // Skipping by default as indexes can only be created manually
-        it.skip("combines multiple where clauses (requires composite index)", async () => {
+        it("combines multiple where clauses (requires composite index)", async () => {
             const snapshot = await db
                 .collection(COLLECTION)
                 .where("active", "==", true)
@@ -463,8 +462,7 @@ describe.skipIf(!ENABLED)("Query Integration Tests", () => {
 
     describe("complex queries", () => {
         // NOTE: This test requires a composite index (active + score) to be created in Firebase Console
-        // Skipping by default as indexes can only be created manually
-        it.skip("combines where, orderBy, and limit (requires composite index)", async () => {
+        it("combines where, orderBy, and limit (requires composite index)", async () => {
             const snapshot = await db
                 .collection(COLLECTION)
                 .where("active", "==", true)
